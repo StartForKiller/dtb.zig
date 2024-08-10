@@ -271,7 +271,7 @@ fn resolveProp(allocator: std.mem.Allocator, root: *dtb.Node, current: *dtb.Node
                 const target = root.findPHandle(phandle_num) orelse return error.MissingCells;
                 const interrupt_cells = target.interruptCells() orelse return error.MissingCells;
 
-                var group = try allocator.alloc(u32, interrupt_cells);
+                var group = try allocator.alloc(u32, interrupt_cells + 1);
                 errdefer allocator.free(group);
 
                 group[0] = phandle_num;
