@@ -284,12 +284,9 @@ fn resolveProp(allocator: std.mem.Allocator, root: *dtb.Node, current: *dtb.Node
                     cell_i += 1;
                 }
                 try groups.append(group);
-
-                return switch (unres) {
-                    .InterruptsExtended => dtb.Prop{ .InterruptsExtended = try groups.toOwnedSlice() },
-                    else => unreachable,
-                };
             }
+
+            return dtb.Prop{ .InterruptsExtended = try groups.toOwnedSlice() };
         },
         .Clocks,
         .AssignedClocks,
