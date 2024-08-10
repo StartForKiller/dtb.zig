@@ -145,6 +145,7 @@ pub const Prop = union(enum) {
     Compatible: [][]const u8,
     Status: PropStatus,
     Interrupts: [][]u32,
+    InterruptsExtended: [][]u32,
     Clocks: [][]u32,
     ClockNames: [][]const u8,
     ClockOutputNames: [][]const u8,
@@ -361,6 +362,7 @@ pub const PropUnresolved = union(enum) {
     Reg: []const u8,
     Ranges: []const u8,
     Interrupts: []const u8,
+    InterruptsExtended: []const u8,
     Clocks: []const u8,
     AssignedClocks: []const u8,
 };

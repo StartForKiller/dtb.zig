@@ -140,6 +140,8 @@ const Parser = struct {
             return dtb.Prop{ .Unresolved = .{ .Clocks = value } };
         } else if (std.mem.eql(u8, name, "assigned-clocks")) {
             return dtb.Prop{ .Unresolved = .{ .AssignedClocks = value } };
+        } else if (std.mem.eql(u8, name, "interrupts-extended")) {
+            return dtb.Prop{ .Unresolved = .{ .InterruptsExtended = value } };
         } else {
             return dtb.Prop{ .Unknown = .{ .name = name, .value = value } };
         }
@@ -249,6 +251,45 @@ fn resolveProp(allocator: std.mem.Allocator, root: *dtb.Node, current: *dtb.Node
             }
 
             return dtb.Prop{ .Interrupts = try groups.toOwnedSlice() };
+        },
+        .InterruptsExtended => |v| {
+            const big_endian_cells = try cellsBigEndian(v);
+            var groups = std.ArrayList([]u32).init(allocator);
+            errdefer {
+                for (groups.items) |group| allocator.free(group);
+                groups.deinit();
+            }
+
+            var cell_i: usize = 0;
+            while (cell_i < big_endian_cells.len) {
+                const phandle_num = std.mem.bigToNative(u32, big_endian_cells[cell_i]);
+                cell_i += 1;
+                if (cell_i >= big_endian_cells.len) {
+                    return error.BadStructure;
+                }
+
+                const target = root.findPHandle(phandle_num) orelse return error.MissingCells;
+                const interrupt_cells = target.interruptCells() orelse return error.MissingCells;
+
+                var group = try allocator.alloc(u32, interrupt_cells);
+                errdefer allocator.free(group);
+
+                group[0] = phandle_num;
+                var item_i: usize = 0;
+                while (item_i < interrupt_cells) : (item_i += 1) {
+                    if (cell_i == big_endian_cells.len) {
+                        return error.BadStructure;
+                    }
+                    group[item_i + 1] = std.mem.bigToNative(u32, big_endian_cells[cell_i]);
+                    cell_i += 1;
+                }
+                try groups.append(group);
+
+                return switch (unres) {
+                    .InterruptsExtended => dtb.Prop{ .InterruptsExtended = try groups.toOwnedSlice() },
+                    else => unreachable,
+                };
+            }
         },
         .Clocks,
         .AssignedClocks,
