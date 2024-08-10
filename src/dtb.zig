@@ -209,6 +209,22 @@ pub const Prop = union(enum) {
                 }
                 try writer.writeAll(">");
             },
+            .InterruptsExtended,
+            => |groups| {
+                try writer.writeAll("interrupts-extended: <");
+                for (groups, 0..) |group, i| {
+                    if (i != 0) {
+                        try writer.writeAll(">, <");
+                    }
+                    for (group, 0..) |item, j| {
+                        if (j != 0) {
+                            try writer.writeAll(" ");
+                        }
+                        try std.fmt.format(writer, "0x{x:0>2}", .{item});
+                    }
+                }
+                try writer.writeAll(">");
+            },
             .Clocks,
             .AssignedClocks,
             => |groups| {
@@ -327,6 +343,7 @@ pub const Prop = union(enum) {
             .Interrupts,
             .Clocks,
             .AssignedClocks,
+            .InterruptsExtended,
             => |groups| {
                 for (groups) |group| {
                     allocator.free(group);
